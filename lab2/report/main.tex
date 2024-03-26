@@ -1,0 +1,331 @@
+\documentclass[12pt,a4paper,table]{article}
+
+\usepackage[a4paper,
+            tmargin=2cm,
+            bmargin=2cm,
+            lmargin=2cm,
+            rmargin=2cm,
+            bindingoffset=0cm]{geometry}
+
+\usepackage{lmodern}
+\usepackage[T1]{polski}
+\usepackage[utf8]{inputenc}
+\usepackage{tocloft}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{float}
+\usepackage{booktabs}
+
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
+
+\newtheorem{definition}{Def}
+
+
+\begin{document}
+    \title {
+        Rachunek Macierzowy i Statystyka Wielowymiarowa \\
+        Sprawozdanie 2 \\
+        Eliminacja Gaussa i LU Faktoryzacja
+
+    }
+
+    \author{
+        Adam Staniszewski \\
+        Przemysław Węglik
+    }
+
+    \date{\today}
+
+    \maketitle
+
+    \tableofcontents
+    \newpage
+
+    \section{Eliminacja Gaussa}
+
+    \subsection{Algorytm eliminacji Gaussa bez pivotingu}
+    \subsubsection{Opis algorytmu}
+    Algorytm eliminacji Gaussa polega na przekształceniu macierzy do postaci górnotrójkątnej poprzez iteracyjne zerowanie elementów pod przekątną w kolejnych kolumnach. W każdym wierszu jest wybierany element główny, w wariancie bez pivotingu jest to pierwszy element niezerowy. Na jego podstawie wykonywane są przekształcenia, które mają wyzerować pozostałe elementy w kolumnie. 
+
+    Algorytm składa sięz dwóch części. Pierwsza zaczyna się od podzielenia wartości w pierwszym rzędzie macierzy \textbf{A} i pierwszego elementu wektor \textbf{b}, tak aby wartość pierwszego elementi na przekątnej \textbf{A} wyniosła 1. Kolejne wiersze są redukowane o wartość wyliczoną na podstawie pierwszych elementów poprzedniego i aktualnego wiersza. 
+    W drugiej fazie algorytm iteruje od ostatnieog wiersza macierzy i odejmuje od kolejnych wierszy odpowiednio przeskalowane poprzednie wiersza, tak aby wyzerować wartości pod przekątną.
+
+    \subsubsection{Pseudokod}
+
+    \begin{lstlisting}[]
+    function gauss_elimination(A, b):
+        n = length(A)
+        
+        for i from 0 to n - 1:
+            divisor = A[i, i]
+            A[i] /= divisor
+            b[i] /= divisor
+            
+            for j from i + 1 to n - 1:
+                multiplier = A[j, i]
+                A[j] -= multiplier * A[i]
+                b[j] -= multiplier * b[i]
+        
+        for i from n - 1 to 0 step -1:
+            for j from 0 to i - 1:
+                multiplier = A[j, i]
+                A[j] -= multiplier * A[i]
+                b[j] -= multiplier * b[i]
+        
+        return b
+
+    \end{lstlisting}
+
+    \subsubsection{Implementacja algorytmu w Pythonie}
+    \begin{lstlisting}[language=Python]
+    def gauss_elimination(A, b):
+        n = len(A)
+        
+        for i in range(n):
+            divisor = A[i, i]
+            A[i] /= divisor
+            b[i] /= divisor
+            
+            for j in range(i + 1, n):
+                multiplier = A[j, i]
+                A[j] -= multiplier * A[i]
+                b[j] -= multiplier * b[i]
+    
+        for i in range(n - 1, -1, -1):
+            for j in range(i):
+                multiplier = A[j, i]
+                A[j] -= multiplier * A[i]
+                b[j] -= multiplier * b[i]
+        
+        return b
+
+    \end{lstlisting}
+
+    \subsubsection{Analiza złożoności}
+    Algorytm wykonuje dzielenie dla wszytkich wierszy macierzy kwadratowej \textbf{A} ($n-i*n-i$) i wszystkich elementów wektora \textbf{b} ($n-i$). Do wszystkich elementów \textbf{A} i \textbf{b} musi zostać dodany współczynnik, do którego wyliczenia jest potrzeba operacja mnożenia. Mamy zatem $(n-1)^2$ operacji mnożenia i dodawania dla A oraz $n-1$ dla b. Sumarycznie mamy zatem:
+    \begin{equation}
+        \text{Operacje mnożenia} = \sum_{i=1}^{n-1} ((n - i)^2 + 2(n - i))  
+    \end{equation}
+    \begin{equation}
+        \text{Operacje dodawania} = \sum_{i=1}^{n-1} ((n - i)^2 + (n - i))  
+    \end{equation}
+
+    Wiedząc, że:
+    \begin{equation}
+        \sum_{k=1}^{n} k = \frac{n(n + 1)}{2}
+    \end{equation}
+
+    oraz:
+
+    \begin{equation}
+        \sum_{k=1}^{n} k^2 = \frac{n(n + 1)(2n + 1)}{6}
+    \end{equation}
+
+    mamy:
+
+    \begin{equation}
+        \text{Operacje mnożenia} = \frac{2n^3 + 3n^2 - 5n}{6}
+    \end{equation}
+    \begin{equation}
+        \text{Operacje dodawania} = \frac{n^3 - n}{3} 
+    \end{equation}
+
+    sumarycznie mamy:
+    
+    \begin{equation}
+        \text{Złożoność} = \frac{2n^3}{3} \text{+} \frac{3n^2}{2} \text{-} \frac{7n}{6}
+    \end{equation}
+
+    Rząd złożoności wynosi zatem O(n^3)
+    
+    \subsection{Algorytm eliminacji Gaussa z pivotingiem}    
+    \subsubsection{Opis algorytmu}
+    Zastosowanie \textbf{pivotingu} w algorytmie eleminacji Gaussa ma na celu zredukowanie powstających błędów numercznych. W tym wariancie elementem głównym dla każdego wiersza jest elementu o największej wartości bezwględnej. Jeśli ten element nie znajduje się na przekątnej, to zawierająca go kolumna zostanie przeniesiona w odpowiednie miejsce.
+    \subsubsection{Pseudokod}
+    
+    \begin{lstlisting}[]
+    function gauss_elimination_pivoting(A, b):
+    n = size(A, 1)
+    pivots = []
+
+    for i = 1 to n do:
+        pivot_row = max(abs(A[i:, i])) + i - 1
+        if pivot_row != i then:
+            pivots.append((i, pivot_row))
+            swap rows A[i] and A[pivot_row]
+            swap elements b[i] and b[pivot_row]
+
+        divisor = A[i, i]
+        A[i] /= divisor
+        b[i] /= divisor
+
+        for j = i + 1 to n do:
+            multiplier = A[j, i]
+            A[j] -= multiplier * A[i]
+            b[j] -= multiplier * b[i]
+
+    for i = n downto 1 do:
+        for j = i - 1 downto 1 do:
+            multiplier = A[j, i]
+            A[j] -= multiplier * A[i]
+            b[j] -= multiplier * b[i]
+
+    for (i, pivot_row) in reversed(pivots) do:
+        swap rows A[i] and A[pivot_row]
+        swap elements b[i] and b[pivot_row]
+
+    return b
+    \end{lstlisting}
+
+    \subsubsection{Implementacja algorytmu w Pythonie}
+    \begin{lstlisting}[language=Python]
+    def gauss_elimination_pivoting(A, b):
+        n = len(A)
+        pivots = []
+        
+        for i in range(n):
+            pivot_row = np.argmax(np.abs(A[i:, i])) + i
+            if pivot_row != i:
+                pivots.append((i, pivot_row))
+                A[[i, pivot_row]] = A[[pivot_row, i]]
+                b[[i, pivot_row]] = b[[pivot_row, i]]
+            
+            divisor = A[i, i]
+            A[i] /= divisor
+            b[i] /= divisor
+            
+            for j in range(i + 1, n):
+                multiplier = A[j, i]
+                A[j] -= multiplier * A[i]
+                b[j] -= multiplier * b[i]
+    
+        for i in range(n - 1, -1, -1):
+            for j in range(i):
+                multiplier = A[j, i]
+                A[j] -= multiplier * A[i]
+                b[j] -= multiplier * b[i]
+    
+        for i, pivot_row in pivots[::-1]: 
+            A[[i, pivot_row]] = A[[pivot_row, i]]
+            b[[i, pivot_row]] = b[[pivot_row, i]]
+    
+        return b
+
+    \end{lstlisting}
+    \subsubsection{Analiza złożoności}
+    Wariant z pivotingiem posiada dwie modyfikacje dotyczące złożoności obliczeniowej. Po pierwsze, szukamy elementu głównego, na co potrzebujemy maksymalnie \( n \) operacji. Po drugie, kolejność rzędów musi zostać zamieniona, aby główny element zawsze był pierwszym elementem niezerowym. Zamiana jest operacją o stałej złożoności. Rząd złożoności obliczeniowej nadal wynosi więc \( O(n^3) \).
+
+    
+    \subsubsection{Porównanie z Matlabem}
+
+    \section{LU Faktoryzacja}
+
+    \subsection{Algorytm LU faktoryzacji bez pivotingu}
+    \subsubsection{Opis algorytmu}
+    Faktoryzacja LU polega na dekompozycji macierzy kwadratowej na iloczyn dwóch macierzy trójkątnych - dolnej (L) i górnej (U). Macierz \textbf{L} jest inicjowana jako jednostokowa, a \textbf{U} jako kopia maciery \textbf{A}. Algorytm modyfikuje macierz \textbf{L}, poprzez ustawianie wartości L[j, i] na iloraz U[j, i] i U[i, i], a od \textbf{U[i][i:]} odejmuje iloczyn \textbf{L[j][i]} i \textbf{U[i][i:]}. 
+    \subsubsection{Pseudokod}
+    \begin{lstlisting}[]
+    function lu_decomposition(A):
+        n = size(A) 
+        L = identity_matrix(n)
+        U = A
+    
+        for i = 0 to n-1:
+            for j = i+1 to n-1:
+                L[j][i] = U[j][i] / U[i][i]
+                for k = i to n-1:
+                    U[j][k] = U[j][k] - L[j][i] * U[i][k]
+    
+        return L, U
+    \end{lstlisting}
+
+    \subsubsection{Implementacja w Pythonie}
+    \begin{lstlisting}[language=Python]
+    def lu_decomposition(A):
+        n = len(A)
+        L = np.eye(n)
+        U = A.copy()
+    
+        for i in range(n):
+            for j in range(i + 1, n):
+                L[j, i] = U[j, i] / U[i, i]
+                U[j, i:] -= L[j, i] * U[i, i:]
+    
+        return L, U
+    \end{lstlisting}
+    \subsubsection{Analiza złożoności}
+    Eliminacja wartości z pierwszej kolumny wymaga $n$ operacji dodawania i $n$ operacji mnożenia dla $n-1$ elementów. Mamy zatem $2n(n-1)$ operacji dla pierwszej kolumny. Dla drugiej kolumny wykonujemy $2(n-i)(n-i+1)$ operacji. Łączna ilość operacji do wykonania wynosi zatem:
+
+    \begin{equation}
+        \sum_{i}^{n}2(n-i)(n-i+1)
+    \end{equation}
+
+    \begin{equation}
+        2\sum_{i}^{n}(n-i)(n-i) + (n - 1)
+    \end{equation}
+
+    Poprzez analogię do równania 4, możemy wywnioskować, że przybliżona złożoność będzie wynosić $\frac{2n^3}{3}$. Złożoność obliczeniowa jest więc rzędu  \( O(n^3) \).
+
+    
+    \subsection{Algorytm LU faktoryzacji z pivotingiem}
+    \subsubsection{Opis algorytmu}
+    Faktoryzacja z pivotingiem stosuje inny sposób wyboru elementu głównego każdego wiersza. Analogicznie do Eliminacji Gaussa, wybieramy element o największej wartości bezwględnej z każdego wiersza każdej macierzy, a następnie zamieniamy wiersze macierzy tak, aby główne elementy znalazły się na przekątnej.  
+    \subsubsection{Pseudokod}
+    \begin{lstlisting}[]
+    function lu_decomposition_pivoting(A):
+    n = length(A)
+        L = zeros(n, n)
+        U = copy(A)
+        P = eye(n)
+    
+        for i from 1 to n do:
+            pivot_row = argmax(abs(U[i:, i])) + i
+            if pivot_row != i then:
+                swap rows U[i] and U[pivot_row]
+                swap rows L[i] and L[pivot_row]
+                swap rows P[i] and P[pivot_row]
+    
+            for j from i + 1 to n do:
+                L[j, i] = U[j, i] / U[i, i]
+                U[j, i:] -= L[j, i] * U[i, i:]
+    
+        L = eye(n) + L
+        return transpose(P), L, U
+
+    \end{lstlisting}
+    \subsubsection{Implementacja w Pythonie}
+    \begin{lstlisting}[language=Python]
+    def lu_decomposition_pivoting(A):
+        n = len(A)
+        L = np.zeros((n, n))
+        U = A.copy()
+        P = np.eye(n)
+    
+        for i in range(n):
+            pivot_row = np.argmax(np.abs(U[i:, i])) + i
+            if pivot_row != i:
+                U[[i, pivot_row]] = U[[pivot_row, i]]
+                L[[i, pivot_row]] = L[[pivot_row, i]]
+                P[[i, pivot_row]] = P[[pivot_row, i]]
+    
+            for j in range(i + 1, n):
+                L[j, i] = U[j, i] / U[i, i]
+                U[j, i:] -= L[j, i] * U[i, i:]
+    
+        L = np.eye(n) + L
+        return P.T, L, U
+    \end{lstlisting}
+    \subsubsection{Analiza złożoności}
+    W przypadku faktoryzacji LU pivoting również nie wpływa znacznie na rząd złożoności obliczeniowej, przez co pozostaje on równy \( O(n^3) \).
+    \subsubsection{Porównanie z Matlabem}
+    
+\end{document}
