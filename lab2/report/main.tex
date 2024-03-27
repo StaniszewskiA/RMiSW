@@ -57,7 +57,7 @@
     Algorytm eliminacji Gaussa polega na przekształceniu macierzy do postaci górnotrójkątnej poprzez iteracyjne zerowanie elementów pod przekątną w kolejnych kolumnach. W każdym wierszu jest wybierany element główny, w wariancie bez pivotingu jest to pierwszy element niezerowy. Na jego podstawie wykonywane są przekształcenia, które mają wyzerować pozostałe elementy w kolumnie. 
 
     Algorytm składa sięz dwóch części. Pierwsza zaczyna się od podzielenia wartości w pierwszym rzędzie macierzy \textbf{A} i pierwszego elementu wektor \textbf{b}, tak aby wartość pierwszego elementi na przekątnej \textbf{A} wyniosła 1. Kolejne wiersze są redukowane o wartość wyliczoną na podstawie pierwszych elementów poprzedniego i aktualnego wiersza. 
-    W drugiej fazie algorytm iteruje od ostatnieog wiersza macierzy i odejmuje od kolejnych wierszy odpowiednio przeskalowane poprzednie wiersza, tak aby wyzerować wartości pod przekątną.
+    W drugiej fazie algorytm iteruje od ostatniego wiersza macierzy i odejmuje od kolejnych wierszy odpowiednio przeskalowane poprzednie wiersza, tak aby wyzerować wartości pod przekątną.
 
     \subsubsection{Pseudokod}
 
@@ -145,7 +145,7 @@
         \text{Złożoność} = \frac{2n^3}{3} \text{+} \frac{3n^2}{2} \text{-} \frac{7n}{6}
     \end{equation}
 
-    Rząd złożoności wynosi zatem O(n^3)
+    Rząd złożoności wynosi zatem $O(n^3)$
     
     \subsection{Algorytm eliminacji Gaussa z pivotingiem}    
     \subsubsection{Opis algorytmu}
@@ -225,7 +225,25 @@
     Wariant z pivotingiem posiada dwie modyfikacje dotyczące złożoności obliczeniowej. Po pierwsze, szukamy elementu głównego, na co potrzebujemy maksymalnie \( n \) operacji. Po drugie, kolejność rzędów musi zostać zamieniona, aby główny element zawsze był pierwszym elementem niezerowym. Zamiana jest operacją o stałej złożoności. Rząd złożoności obliczeniowej nadal wynosi więc \( O(n^3) \).
 
     
-    \subsubsection{Porównanie z Matlabem}
+    \subsubsection{Porównanie z Numpy}
+
+    \begin{lstlisting}[language=Python]
+        # gauss elimination
+        [-1.22364004  1.2599961   2.48610013 -0.76265502]
+        # gauss elimination with pivoting
+        [-1.22364004  1.2599961   2.48610013 -0.76265502]
+        # numpy.linalg.solve
+        [-1.22364004  1.2599961   2.48610013 -0.76265502]
+
+        # checking using numpy.allclose
+        Are the results close: True
+        Are the results close: True
+
+    \end{lstlisting}
+    
+    Algorytm zwraca identyczne wyniki równania jak funkcji 
+    biblioteczna. Jedyne czego można by się dosuzkiwać to różna dokładność numeryczna,
+    ale to róœnież zweryfikowano i wyniki są równe z dokładnością $10^{-8}$
 
     \section{LU Faktoryzacja}
 
@@ -326,6 +344,34 @@
     \end{lstlisting}
     \subsubsection{Analiza złożoności}
     W przypadku faktoryzacji LU pivoting również nie wpływa znacznie na rząd złożoności obliczeniowej, przez co pozostaje on równy \( O(n^3) \).
-    \subsubsection{Porównanie z Matlabem}
+    \subsubsection{Porównanie z Scipy}
+
+    \begin{lstlisting}[language=Python]
+        L:
+        [[1.         0.         0.        ]
+        [2.51331659 1.         0.        ]
+        [1.12521846 0.47304452 1.        ]]
+        [[ 1.          0.          0.        ]
+        [ 0.39788064  1.          0.        ]
+        [ 0.44770263 -0.06369218  1.        ]]
+        U:
+        [[ 0.02773589  0.04715342  0.07249239]
+        [ 0.         -0.07082049 -0.08996962]
+        [ 0.          0.         -0.02421129]]
+        [[ 0.06970907  0.04769098  0.09222671]
+        [ 0.          0.0281781   0.03579717]
+        [ 0.          0.         -0.02421129]]
+
+    \end{lstlisting}
+    
+    Widzimy wyniki L i U zwróce przez naszą funkcję (bez pivotingu!) i przez funkcję
+    biblioteczną `scipy.linalg.lu`. WIdzimy, że wyiki się od siebie różnią. Wynika to z tego, że
+    funkcja biblioteczna stosuje pivoting. Jeśli użyejmy naszej funkcji z pivotingiem to uzyskamy
+    identyczne wyniki. Warto zauważyć, że nawet w wersji bez pivotingu, jeśli trafi się nam
+    "szczęśliwa" macierz, to macierz permutacji będzie równa macierzy identycznościowej
+    i wtedy oba algorytmu: nasz bez pivotingu i biblioteczny zwrócą identyczny wynik.
+    Dla n = 3 takie prawdopodobieństwo jest równe $1/6$
+
+
     
 \end{document}
