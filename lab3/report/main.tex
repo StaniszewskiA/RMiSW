@@ -1,0 +1,157 @@
+\documentclass[12pt,a4paper,table]{article}
+
+\usepackage[a4paper,
+            tmargin=2cm,
+            bmargin=2cm,
+            lmargin=2cm,
+            rmargin=2cm,
+            bindingoffset=0cm]{geometry}
+
+\usepackage{lmodern}
+\usepackage[T1]{polski}
+\usepackage[utf8]{inputenc}
+\usepackage{tocloft}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{float}
+\usepackage{booktabs}
+
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
+
+\newtheorem{definition}{Def}
+
+
+\begin{document}
+    \title {
+        Rachunek Macierzowy i Statystyka Wielowymiarowa \\
+        Sprawozdanie 3 \\
+        Normy Macierzowe i SVD
+
+    }
+
+    \author{
+        Adam Staniszewski \\
+        Przemysław Węglik
+    }
+
+    \date{\today}
+
+    \maketitle
+
+    \tableofcontents
+    \newpage
+
+    \section{Norma M$_1$}
+    
+    \subsection{Obliczanie normy}
+    
+    \begin{lstlisting}[language=Python]
+    matrix_1_norm = lambda x: np.max(np.sum(x, axis=0))
+    \end{lstlisting}
+
+    Każdą z norm obliczamy dla macierzy 
+
+    \[
+    \begin{matrix}
+    4 & 9 & 2 \\
+    3 & 5 & 7 \\
+    8 & 1 & 6
+    \end{matrix}
+    \]
+
+    zwaną dalej macierzą M.
+
+    \vspace{1em}
+    M$_1$ dla macierzy M wynosi 15.
+    
+    \subsection{Obliczanie współczynnika uwarunkowania}
+    
+    \begin{lstlisting}[language=Python]
+    cond_matrix_1_norm = lambda x: matrix_1_norm(x) * 
+                            matrix_1_norm(np.linalg.inv(x))
+    \end{lstlisting}
+
+    \vspace{1em}
+    Współczynnik uwarunkowania macierzy M wynosi w tym przypadku 1.0000000000000004.
+    
+    \section{Norma M$_2$}
+    
+    \subsection{Obliczanie normy}
+
+    \begin{lstlisting}[language=Python]
+    matrix_2_norm = lambda x: np.linalg.svd(M, compute_uv=False)[0]
+    \end{lstlisting}
+
+    \vspace{1em}
+    M$_2$ dla macierzy M wynosi 15.000000000000002.
+    
+    \subsection{Obliczanie współczynnika uwarunkowania}
+
+    \begin{lstlisting}[language=Python]
+    def cond_matrix_2_norm(matrix):
+        singular_values = np.linalg.svd(matrix, compute_uv=False)
+        return singular_values[0] / singular_values[matrix.shape[0] - 1]
+    \end{lstlisting}
+
+    \vspace{1em}
+    Współczynnik uwarunkowania macierzy M wynosi w tym przypadku 4.330127018922198.
+    
+    \section{Norma M$_p$}
+    
+    Obliczenie normy M$_p$ jest problemem NP-Trudnym. Odsyłamy do publikacji \href{https://arxiv.org/pdf/1001.2613.pdf}{Approximating Matrix p-norms}.
+
+    
+    \section{Norma M$_\infty$}
+    
+    \subsection{Obliczanie normy}
+
+    \begin{lstlisting}[language=Python]
+    matrix_inf_norm = lambda x: np.max(np.sum(x, axis=1))
+    \end{lstlisting}
+
+    M$_\infty$ dla macierzy M wynosi 15.
+    
+    \subsection{Obliczanie współczynnika uwarunkowania}
+
+    \begin{lstlisting}[language=Python]
+    cond_matrix_inf_norm = lambda x: matrix_inf_norm(x) * 
+                            matrix_inf_norm(np.linalg.inv(x))
+    \end{lstlisting}
+
+    \vspace{1em}
+    Współczynnik uwarunkowania macierzy M wynosi w tym przypadku 1.0000000000000002.
+    
+    \section{SVD}
+    Używamy algorytmy \textbf{Power Iteration}.
+
+    \begin{lstlisting}[language=Python]
+    def power_iteration(A, num_iterations: int):
+        # Ideally choose a random vector
+        # To decrease the chance that our vector
+        # Is orthogonal to the eigenvector
+        b_k = np.random.rand(A.shape[1])
+    
+        for _ in range(num_iterations):
+            # calculate the matrix-by-vector product Ab
+            b_k1 = np.dot(A, b_k)
+    
+            # calculate the norm
+            b_k1_norm = np.linalg.norm(b_k1)
+    
+            # re normalize the vector
+            b_k = b_k1 / b_k1_norm
+    
+        # Rayleigh quotient
+        return b_k, b_k.T @ A @ b_k / (b_k.T @ b_k)
+    \end{lstlisting}
+    
+\end{document}
